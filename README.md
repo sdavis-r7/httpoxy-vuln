@@ -24,7 +24,7 @@ Here is how you can see it in action:
 
     `nc -l 12345`
 
-4. to to test a docker container running at 192.168.99.100, out to a proxy running at 192.168.0.6.12345...
+4. test that the container running at 192.168.99.100, attempts to proxy out 192.168.0.6.12345...
 
 
     ```sh
